@@ -429,7 +429,7 @@ model Message {
 model AuditLog {
   id String @id @default(cuid())
   businessId String?
-  business Business? @relation(fields: [businessId], references: [id])
+  business Business? @relation(fields: [businessId], references: [id], onDelete: Restrict)
   actorId String
   action String
   entityId String?

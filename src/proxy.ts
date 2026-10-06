@@ -5,8 +5,9 @@ import { consoleRoute } from "./lib/console/route";
  * Rewrite targets are cloned from the request URL, never built from the Host
  * header (that would be an SSRF vector). Next treats a rewrite whose origin
  * differs from the server's own origin as an external proxy, so in dev the
- * server must be bound to "localhost" (plain `next dev`); binding 127.0.0.1
- * makes every rewrite external because NextURL normalises loopback to localhost.
+ * server must be started with `--hostname localhost` (the `dev` script); binding
+ * 127.0.0.1 makes every rewrite external because NextURL normalises loopback
+ * hosts to localhost. (Plain `next dev` would bind 0.0.0.0, exposing it to the LAN.)
  */
 function rewriteTarget(
   request: NextRequest,
