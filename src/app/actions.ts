@@ -26,12 +26,9 @@ import {
 import { connectWhatsApp, mapTemplate, syncTemplates } from "@/lib/whatsapp";
 import { createCampaign, previewCampaign } from "@/lib/messaging";
 import { toPaise, type MemberInput } from "@/lib/domain";
-import { acceptInvitation, createBusiness, inviteStaff } from "@/lib/admin";
-import { hashToken, secretToken } from "@/lib/security";
-import { sendEmail } from "@/lib/mail";
+import { acceptInvitation, inviteStaff } from "@/lib/admin";
 import { manualWhatsApp, requireCloudWhatsApp } from "@/lib/whatsapp-mode";
 import { recordManualSend } from "@/lib/manual-whatsapp";
-import { saveBusinessFee } from "@/lib/business-billing";
 import { completeGoogleSignup } from "@/lib/signup";
 
 export type ActionState = {
@@ -43,16 +40,6 @@ export type ActionState = {
   body?: string;
 };
 const field = (f: FormData, key: string) => String(f.get(key) ?? "").trim();
-async function selectWorkspace(businessId: string) {
-  const jar = await cookies();
-  jar.delete("membrr-support");
-  jar.set("membrr-business", businessId, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-  });
-}
 export async function mutate(
   _previous: ActionState,
   f: FormData,
@@ -76,109 +63,6 @@ export async function mutate(
         redirectTo: "/login",
       };
     }
-    if (op.startsWith("admin-")) {
-      const admin = await requireAdmin();
-      const businessId = field(f, "businessId");
-      if (op === "admin-create") {
-        const business = await createBusiness(
-          admin.id,
-          field(f, "name"),
-          field(f, "city"),
-        );
-        await selectWorkspace(business.id);
-        revalidatePath("/admin");
-        return {
-          ok: true,
-          message: "Workspace created.",
-          redirectTo: "/dashboard",
-        };
-      } else if (op === "admin-open") {
-        const access = await db.staffAccess.findUnique({
-          where: { businessId_userId: { businessId, userId: admin.id } },
-        });
-        if (access?.role !== "OWNER")
-          throw new Error("Owner access is required to open this workspace.");
-        await selectWorkspace(businessId);
-        return {
-          ok: true,
-          message: "Workspace opened.",
-          redirectTo: "/dashboard",
-        };
-      } else if (op === "admin-billing") {
-        await saveBusinessFee(admin.id, businessId, field(f, "monthlyFee"));
-        revalidatePath("/billing");
-      } else if (op === "admin-status") {
-        const b = await db.business.findUniqueOrThrow({
-          where: { id: businessId },
-        });
-        await db.$transaction([
-          db.business.update({
-            where: { id: b.id },
-            data: { status: b.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE" },
-          }),
-          db.auditLog.create({
-            data: {
-              businessId,
-              actorId: admin.id,
-              action: "BUSINESS_STATUS_CHANGED",
-              detail: b.status === "ACTIVE" ? "Suspended" : "Activated",
-            },
-          }),
-        ]);
-      } else if (op === "admin-support") {
-        const reason = field(f, "reason");
-        if (reason.length < 10 || reason.length > 500)
-          throw new Error(
-            "Record the reason for support access (10–500 characters).",
-          );
-        await db.business.findUniqueOrThrow({ where: { id: businessId } });
-        const expiresAt = new Date(Date.now() + 30 * 60000);
-        const grant = await db.supportGrant.create({
-          data: { actorId: admin.id, businessId, reason, expiresAt },
-        });
-        await db.auditLog.create({
-          data: {
-            businessId,
-            actorId: admin.id,
-            action: "SUPPORT_ACCESS_GRANTED",
-            detail: reason,
-          },
-        });
-        (await cookies()).set("membrr-support", grant.id, {
-          httpOnly: true,
-          sameSite: "lax",
-          secure: process.env.NODE_ENV === "production",
-          path: "/",
-          expires: expiresAt,
-        });
-        return {
-          ok: true,
-          message: "Audited support access started for 30 minutes.",
-          redirectTo: "/dashboard",
-        };
-      } else if (op === "admin-resend") {
-        const i = await db.invitation.findFirst({
-          where: { businessId, acceptedAt: null },
-          orderBy: { createdAt: "desc" },
-        });
-        if (!i) throw new Error("No pending invitation found.");
-        const token = secretToken();
-        await db.invitation.update({
-          where: { id: i.id },
-          data: {
-            tokenHash: hashToken(token),
-            expiresAt: new Date(Date.now() + 7 * 86400000),
-          },
-        });
-        await sendEmail(
-          i.email,
-          "Your membrr invitation",
-          `${process.env.BETTER_AUTH_URL}/invite/${token}`,
-        );
-      } else throw new Error("Unknown administrator action.");
-      revalidatePath("/admin");
-      return { ok: true, message: "Workspace updated." };
-    }
     if (op === "end-support") {
       const admin = await requireAdmin();
       const jar = await cookies();
@@ -192,7 +76,7 @@ export async function mutate(
       return {
         ok: true,
         message: "Support access ended.",
-        redirectTo: "/admin",
+        redirectTo: process.env.CONSOLE_URL ?? "/dashboard",
       };
     }
     const ctx = await getContext();

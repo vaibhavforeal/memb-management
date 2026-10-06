@@ -42,17 +42,23 @@ export function ActionForm({
   submit = "Save changes",
   className = "space-y-3",
   variant = "default",
+  serverAction = mutate,
 }: {
   action: string;
   children?: React.ReactNode;
   submit?: string;
   className?: string;
   variant?: "default" | "secondary" | "destructive";
+  serverAction?: (prev: ActionState, form: FormData) => Promise<ActionState>;
 }) {
-  const [state, formAction] = useActionState(mutate, initialActionState);
+  const [state, formAction] = useActionState(serverAction, initialActionState);
   const router = useRouter();
   useEffect(() => {
-    if (state.ok && state.redirectTo) router.push(state.redirectTo);
+    if (!state.ok || !state.redirectTo) return;
+    // Absolute URLs cross hosts (console ↔ main site); the client router cannot.
+    if (/^https?:\/\//i.test(state.redirectTo))
+      window.location.assign(state.redirectTo);
+    else router.push(state.redirectTo);
   }, [state, router]);
   return (
     <form action={formAction} className={className}>
