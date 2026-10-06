@@ -90,8 +90,43 @@ test("non-admin owner is refused on the console", async ({ page }) => {
   await expect(
     page.getByText("This account doesn't have console access."),
   ).toBeVisible();
+  // The console has no reset flow; the link goes to the main site's.
+  await expect(
+    page.getByRole("link", { name: "Forgot password?" }),
+  ).toHaveAttribute("href", `${MAIN}/forgot-password`);
   await page.goto(`${CONSOLE}/workspaces`);
   await expect(page).toHaveURL(`${CONSOLE}/login`);
+});
+
+test("a non-admin session gets no CSV from the orders export", async ({
+  page,
+}) => {
+  // Block the post-sign-in navigation to the console root: its guard would
+  // sign the owner out, and this check needs the non-admin session alive.
+  let blocked = () => {};
+  const navigationBlocked = new Promise<void>((resolve) => (blocked = resolve));
+  await page.route(`${CONSOLE}/`, async (route) => {
+    await route.abort();
+    blocked();
+  });
+  await consoleSignIn(page, owner.email);
+  await navigationBlocked;
+  await page.unroute(`${CONSOLE}/`);
+  // Requested by the browser (Node cannot resolve console.localhost). A CSV
+  // body would start a download and make goto() throw.
+  const response = await page.goto(
+    `${CONSOLE}/api/console/orders.csv?status=paid`,
+  );
+  // `not_admin` (not a plain /login) proves the request carried a session.
+  expect(page.url()).toBe(`${CONSOLE}/login?error=not_admin`);
+  const csvRequest = response!.request().redirectedFrom();
+  expect(new URL(csvRequest!.url()).pathname).toBe("/api/console/orders.csv");
+  const csvResponse = await csvRequest!.response();
+  expect([303, 307, 308]).toContain(csvResponse!.status());
+  for (const r of [csvResponse!, response!]) {
+    expect(r.headers()["content-type"] ?? "").not.toContain("text/csv");
+    expect(r.headers()["content-disposition"]).toBeUndefined();
+  }
 });
 
 test("admin sees every console page", async ({ page }) => {
@@ -260,4 +295,29 @@ test("support access hands off to the workspace dashboard with the banner", asyn
       where: { businessId, action: "SUPPORT_ACCESS_GRANTED" },
     }),
   ).toBe(1);
+});
+
+test("Google sign-in on the main host returns to the next parameter", async ({
+  page,
+}) => {
+  const next = "/support/start?grant=e2e-check";
+  await page.goto(`${MAIN}/login?next=${encodeURIComponent(next)}`);
+  const google = page.getByRole("button", { name: "Continue with Google" });
+  test.skip(
+    (await google.count()) === 0,
+    "Google sign-in is not configured (GOOGLE_CLIENT_ID unset)",
+  );
+  let body: { callbackURL?: string } | undefined;
+  // Capture the request the button sends, and stop before it reaches Google.
+  await page.route("**/api/auth/sign-in/social", async (route) => {
+    body = route.request().postDataJSON();
+    await route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({ message: "Blocked by the e2e test" }),
+    });
+  });
+  await google.click();
+  await expect(page.getByText("Google sign-in could not start")).toBeVisible();
+  expect(body?.callbackURL).toBe(next);
 });

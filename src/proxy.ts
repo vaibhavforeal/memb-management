@@ -42,5 +42,11 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)"],
+  matcher: [
+    // Everything except Next internals and paths with a file extension (static files).
+    "/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)",
+    // /console/* must always reach the proxy (main-host 404), even with a dot in the path.
+    "/console",
+    "/console/:path*",
+  ],
 };

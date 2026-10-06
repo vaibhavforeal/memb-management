@@ -6,10 +6,26 @@ export type ConsoleRouteResult =
   | { type: "not-found" }
   | { type: "next" };
 
-/** Case-insensitive exact match, port included. */
+/**
+ * Lower-cases a Host value and drops what does not change the origin a browser
+ * means: a trailing root dot on the hostname and the default ports :443 / :80.
+ * Any other port is kept, so `console.localhost:3001` stays distinct.
+ */
+function normalizeHost(host: string): string {
+  const value = host.trim().toLowerCase();
+  // Anything that is not `name[:port]` (e.g. a dot after the port) is left as is.
+  const parts = /^([^:]*)(?::(\d+))?$/.exec(value);
+  if (!parts) return value;
+  const name = parts[1].replace(/\.$/, "");
+  const port = parts[2];
+  return port && port !== "443" && port !== "80" ? `${name}:${port}` : name;
+}
+
+/** Case-insensitive exact match, port included (default ports and a trailing dot ignored). */
 export function isConsoleHost(host: string, consoleHost?: string): boolean {
   if (!consoleHost) return false;
-  return host.trim().toLowerCase() === consoleHost.trim().toLowerCase();
+  const expected = normalizeHost(consoleHost);
+  return expected !== "" && normalizeHost(host) === expected;
 }
 
 function isUnder(pathname: string, prefix: string): boolean {

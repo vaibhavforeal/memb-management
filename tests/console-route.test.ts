@@ -19,6 +19,28 @@ describe("isConsoleHost", () => {
       isConsoleHost("console.localhost:3001", "console.localhost:3000"),
     ).toBe(false);
   });
+  it("ignores a trailing dot and the default ports 443 / 80 only", () => {
+    expect(isConsoleHost("console.membrr.pro.", CH)).toBe(true);
+    expect(isConsoleHost("console.membrr.pro:443", CH)).toBe(true);
+    expect(isConsoleHost("console.membrr.pro:80", CH)).toBe(true);
+    expect(isConsoleHost("Console.Membrr.Pro.:443", CH)).toBe(true);
+    expect(isConsoleHost("console.membrr.pro", "console.membrr.pro:443")).toBe(
+      true,
+    );
+    expect(isConsoleHost("console.membrr.pro:8443", CH)).toBe(false);
+    expect(isConsoleHost("console.membrr.pro:4430", CH)).toBe(false);
+    expect(isConsoleHost("console.membrr.pro..", CH)).toBe(false);
+    expect(isConsoleHost("console.membrr.pro.:8080", CH)).toBe(false);
+    expect(
+      isConsoleHost("console.localhost:3000.", "console.localhost:3000"),
+    ).toBe(false);
+    expect(
+      isConsoleHost("console.localhost.:3000", "console.localhost:3000"),
+    ).toBe(true);
+    expect(isConsoleHost("console.localhost", "console.localhost:3000")).toBe(
+      false,
+    );
+  });
   it("is false when consoleHost unset", () => {
     expect(isConsoleHost("console.membrr.pro", undefined)).toBe(false);
     expect(isConsoleHost("", "")).toBe(false);
@@ -55,6 +77,14 @@ describe("consoleRoute", () => {
       type: "rewrite",
       pathname: "/console/login",
     });
+  });
+  it("default port and trailing dot route like the canonical host", () => {
+    for (const host of ["console.membrr.pro:443", "console.membrr.pro."]) {
+      expect(consoleRoute(host, "/workspaces", env)).toEqual({
+        type: "rewrite",
+        pathname: "/console/workspaces",
+      });
+    }
   });
   it("mixed-case host matches", () => {
     expect(consoleRoute("CONSOLE.membrr.Pro", "/", env)).toEqual({
