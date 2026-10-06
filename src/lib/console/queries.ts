@@ -221,3 +221,258 @@ export async function workspaceDetail(id: string) {
     })),
   };
 }
+
+const IST_OFFSET_MS = 330 * 60_000;
+
+function validDay(value: string | undefined) {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const date = new Date(`${value}T00:00:00Z`);
+  return Number.isNaN(+date) || date.toISOString().slice(0, 10) !== value
+    ? null
+    : date;
+}
+
+/** [start, end) UTC instants of an IST calendar month given as YYYY-MM. */
+export function istMonthRange(month: string | undefined) {
+  if (!month || !/^\d{4}-\d{2}$/.test(month)) return null;
+  const first = validDay(`${month}-01`);
+  if (!first) return null;
+  const next = new Date(
+    Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 1),
+  );
+  return {
+    start: new Date(+first - IST_OFFSET_MS),
+    end: new Date(+next - IST_OFFSET_MS),
+  };
+}
+
+/** Inclusive IST date range (YYYY-MM-DD) as [from, to) UTC instants. */
+export function istDayRange(from?: string, to?: string) {
+  const a = validDay(from);
+  const b = validDay(to);
+  return {
+    gte: a ? new Date(+a - IST_OFFSET_MS) : undefined,
+    lt: b ? new Date(+b + 86_400_000 - IST_OFFSET_MS) : undefined,
+  };
+}
+
+function pageOf(page: number | undefined, pages: number) {
+  return Math.min(Math.max(1, Math.floor(page ?? 1) || 1), pages);
+}
+
+export type OrderFilters = { status?: string; month?: string; q?: string };
+
+function orderWhere({ status, month, q }: OrderFilters) {
+  const range = istMonthRange(month);
+  const term = q?.trim();
+  return {
+    ...(status === "paid" ? { paidAt: { not: null } } : {}),
+    ...(status === "pending" ? { paidAt: null } : {}),
+    ...(range ? { createdAt: { gte: range.start, lt: range.end } } : {}),
+    ...(term
+      ? { business: { name: { contains: term, mode: "insensitive" as const } } }
+      : {}),
+  };
+}
+
+export async function listOrders({
+  page,
+  ...filters
+}: OrderFilters & { page?: number }) {
+  const where = orderWhere(filters);
+  const total = await db.businessBillingOrder.count({ where });
+  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const current = pageOf(page, pages);
+  const items = await db.businessBillingOrder.findMany({
+    where,
+    include: { business: { select: { id: true, name: true } } },
+    orderBy: { createdAt: "desc" },
+    skip: (current - 1) * PAGE_SIZE,
+    take: PAGE_SIZE,
+  });
+  return { total, pages, page: current, items };
+}
+
+export const CSV_ROW_CAP = 10_000;
+
+export async function exportOrders(filters: OrderFilters) {
+  const rows = await db.businessBillingOrder.findMany({
+    where: orderWhere(filters),
+    include: { business: { select: { name: true } } },
+    orderBy: { createdAt: "desc" },
+    take: CSV_ROW_CAP,
+  });
+  return rows.map((r) => ({ ...r, workspace: r.business.name }));
+}
+
+/** Paid totals for the last 12 IST months (by payment date), newest first. */
+export async function monthlyRevenue(now = new Date()) {
+  const today = todayIST(now);
+  const year = today.getUTCFullYear();
+  const month = today.getUTCMonth();
+  const keys = Array.from({ length: 12 }, (_, i) => {
+    const d = new Date(Date.UTC(year, month - i, 1));
+    return d.toISOString().slice(0, 7);
+  });
+  const oldest = istMonthRange(keys[11])!.start;
+  const paid = await db.businessBillingOrder.findMany({
+    where: { paidAt: { gte: oldest } },
+    select: { amountPaise: true, paidAt: true },
+  });
+  const totals = new Map(keys.map((k) => [k, { paise: 0, orders: 0 }]));
+  for (const o of paid) {
+    const key = new Date(+o.paidAt! + IST_OFFSET_MS).toISOString().slice(0, 7);
+    const t = totals.get(key);
+    if (t) {
+      t.paise += o.amountPaise;
+      t.orders += 1;
+    }
+  }
+  return keys.map((month) => ({ month, ...totals.get(month)! }));
+}
+
+export async function listUsers({ q, page }: { q?: string; page?: number }) {
+  const term = q?.trim();
+  const where = term
+    ? {
+        OR: [
+          { email: { contains: term, mode: "insensitive" as const } },
+          { name: { contains: term, mode: "insensitive" as const } },
+        ],
+      }
+    : {};
+  const total = await db.user.count({ where });
+  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const current = pageOf(page, pages);
+  const items = await db.user.findMany({
+    where,
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      platformAdmin: true,
+      createdAt: true,
+      _count: { select: { access: true } },
+    },
+    orderBy: { createdAt: "desc" },
+    skip: (current - 1) * PAGE_SIZE,
+    take: PAGE_SIZE,
+  });
+  return { total, pages, page: current, items };
+}
+
+export async function userDetail(id: string, now = new Date()) {
+  return db.user.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      platformAdmin: true,
+      createdAt: true,
+      access: {
+        select: {
+          id: true,
+          role: true,
+          business: { select: { id: true, name: true } },
+        },
+      },
+      sessions: {
+        where: { expiresAt: { gt: now } },
+        select: {
+          id: true,
+          createdAt: true,
+          updatedAt: true,
+          ipAddress: true,
+          userAgent: true,
+        },
+        orderBy: { updatedAt: "desc" },
+      },
+    },
+  });
+}
+
+export type AuditFilters = {
+  business?: string;
+  actor?: string;
+  action?: string;
+  from?: string;
+  to?: string;
+};
+
+export async function listAudit({
+  page,
+  ...f
+}: AuditFilters & { page?: number }) {
+  const actor = f.actor?.trim();
+  const range = istDayRange(f.from, f.to);
+  const where = {
+    ...(f.business ? { businessId: f.business } : {}),
+    ...(f.action ? { action: f.action } : {}),
+    ...(actor
+      ? {
+          actorId: {
+            in: (
+              await db.user.findMany({
+                where: { email: { contains: actor, mode: "insensitive" } },
+                select: { id: true },
+              })
+            ).map((u) => u.id),
+          },
+        }
+      : {}),
+    ...(range.gte || range.lt
+      ? { createdAt: { gte: range.gte, lt: range.lt } }
+      : {}),
+  };
+  const total = await db.auditLog.count({ where });
+  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const current = pageOf(page, pages);
+  const rows = await db.auditLog.findMany({
+    where,
+    orderBy: { createdAt: "desc" },
+    skip: (current - 1) * PAGE_SIZE,
+    take: PAGE_SIZE,
+  });
+  const [users, businesses] = await Promise.all([
+    db.user.findMany({
+      where: { id: { in: [...new Set(rows.map((r) => r.actorId))] } },
+      select: { id: true, email: true },
+    }),
+    db.business.findMany({
+      where: {
+        id: {
+          in: [
+            ...new Set(
+              rows.flatMap((r) => (r.businessId ? [r.businessId] : [])),
+            ),
+          ],
+        },
+      },
+      select: { id: true, name: true },
+    }),
+  ]);
+  const emailOf = new Map(users.map((u) => [u.id, u.email]));
+  const nameOf = new Map(businesses.map((b) => [b.id, b.name]));
+  return {
+    total,
+    pages,
+    page: current,
+    items: rows.map((r) => ({
+      ...r,
+      actorEmail: emailOf.get(r.actorId) ?? r.actorId,
+      businessName: r.businessId
+        ? (nameOf.get(r.businessId) ?? r.businessId)
+        : null,
+    })),
+  };
+}
+
+export async function auditActions() {
+  const rows = await db.auditLog.findMany({
+    distinct: ["action"],
+    select: { action: true },
+    orderBy: { action: "asc" },
+  });
+  return rows.map((r) => r.action);
+}
