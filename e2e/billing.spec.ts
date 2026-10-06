@@ -5,6 +5,7 @@ import { db } from "../src/lib/db";
 import { cleanup, ensureLocalTest, fixture } from "../scripts/test-support";
 import { acceptInvitation } from "../src/lib/admin";
 import { hashToken, secretToken } from "../src/lib/security";
+import { saveBusinessFee } from "../src/lib/business-billing";
 
 test.skip(
   process.env.BILLING_E2E_PROVIDER !== "simulated",
@@ -122,14 +123,9 @@ test("admin fee → owner checkout → verified payment → idempotent signed we
       })
     ).status(),
   ).toBe(403);
-  await page.goto("/admin");
-  const card = page.locator("section").filter({
-    has: page.getByRole("heading", { name: owner.b.name, exact: true }),
-  });
-  await card.getByRole("button", { name: "Configure billing" }).click();
-  await page.getByLabel("Monthly fee (₹)").fill("1499.50");
-  await page.getByRole("button", { name: "Save monthly fee" }).click();
-  await expect(page.getByText("Workspace updated.")).toBeVisible();
+  // The console's "Configure billing" dialog calls this same service; the
+  // console host is not reachable on this isolated server.
+  await saveBusinessFee(owner.user.id, owner.b.id, "1499.50");
   await expect
     .poll(
       async () =>
