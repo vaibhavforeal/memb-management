@@ -10,11 +10,14 @@ export function LoginForm({
   googleEnabled = false,
   initialError = "",
   redirectTo = "/dashboard",
+  forgotHref = "/forgot-password",
 }: {
   demo?: boolean;
   googleEnabled?: boolean;
   initialError?: string;
   redirectTo?: string;
+  /** Where "Forgot password?" points; empty hides the link. */
+  forgotHref?: string;
 }) {
   const [error, setError] = useState(initialError);
   const [pending, setPending] = useState<"email" | "google" | null>(null);
@@ -54,7 +57,8 @@ export function LoginForm({
               try {
                 const result = await authClient.signIn.social({
                   provider: "google",
-                  callbackURL: "/dashboard",
+                  // Already sanitised by safeNext on the login page.
+                  callbackURL: redirectTo,
                   newUserCallbackURL: "/onboarding",
                   errorCallbackURL: "/login?auth_error=google",
                 });
@@ -107,14 +111,16 @@ export function LoginForm({
           defaultValue={demo ? "MembrrDemo!2026" : undefined}
         />
       </label>
-      <div className="flex justify-end">
-        <Link
-          href="/forgot-password"
-          className="text-xs text-muted-foreground hover:text-primary"
-        >
-          Forgot password?
-        </Link>
-      </div>
+      {forgotHref && (
+        <div className="flex justify-end">
+          <Link
+            href={forgotHref}
+            className="text-xs text-muted-foreground hover:text-primary"
+          >
+            Forgot password?
+          </Link>
+        </div>
+      )}
       {error && (
         <p className="text-xs text-destructive" role="alert">
           {error}

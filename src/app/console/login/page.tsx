@@ -9,6 +9,8 @@ export default async function ConsoleLoginPage({
 }) {
   await connection();
   const query = await searchParams;
+  // The console has no reset flow of its own; send admins to the main site's.
+  const mainUrl = process.env.BETTER_AUTH_URL;
   return (
     <main className="auth-backdrop flex min-h-screen items-center justify-center px-4 py-8">
       <div className="w-full max-w-sm">
@@ -21,6 +23,7 @@ export default async function ConsoleLoginPage({
           googleEnabled={false}
           demo={false}
           redirectTo="/"
+          forgotHref={mainUrl ? `${mainUrl}/forgot-password` : ""}
           initialError={
             query.error === "not_admin"
               ? "This account doesn't have console access."

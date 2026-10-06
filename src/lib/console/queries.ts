@@ -262,13 +262,24 @@ function pageOf(page: number | undefined, pages: number) {
 
 export type OrderFilters = { status?: string; month?: string; q?: string };
 
-function orderWhere({ status, month, q }: OrderFilters) {
+/** Which order date the month filter applies to: payment date for paid orders, else creation date. */
+export function orderMonthField(status?: string): "paidAt" | "createdAt" {
+  return status === "paid" ? "paidAt" : "createdAt";
+}
+
+export function orderWhere({ status, month, q }: OrderFilters) {
   const range = istMonthRange(month);
   const term = q?.trim();
+  // With status=paid the month matches the 12-month totals, which group by paidAt.
+  const monthField = orderMonthField(status);
   return {
     ...(status === "paid" ? { paidAt: { not: null } } : {}),
     ...(status === "pending" ? { paidAt: null } : {}),
-    ...(range ? { createdAt: { gte: range.start, lt: range.end } } : {}),
+    ...(range
+      ? monthField === "paidAt"
+        ? { paidAt: { not: null, gte: range.start, lt: range.end } }
+        : { createdAt: { gte: range.start, lt: range.end } }
+      : {}),
     ...(term
       ? { business: { name: { contains: term, mode: "insensitive" as const } } }
       : {}),
@@ -305,23 +316,25 @@ export async function exportOrders(filters: OrderFilters) {
   return rows.map((r) => ({ ...r, workspace: r.business.name }));
 }
 
-/** Paid totals for the last 12 IST months (by payment date), newest first. */
-export async function monthlyRevenue(now = new Date()) {
+/** The last 12 IST month keys (YYYY-MM), newest first. */
+export function lastTwelveMonthKeys(now = new Date()) {
   const today = todayIST(now);
   const year = today.getUTCFullYear();
   const month = today.getUTCMonth();
-  const keys = Array.from({ length: 12 }, (_, i) => {
-    const d = new Date(Date.UTC(year, month - i, 1));
-    return d.toISOString().slice(0, 7);
-  });
-  const oldest = istMonthRange(keys[11])!.start;
-  const paid = await db.businessBillingOrder.findMany({
-    where: { paidAt: { gte: oldest } },
-    select: { amountPaise: true, paidAt: true },
-  });
+  return Array.from({ length: 12 }, (_, i) =>
+    new Date(Date.UTC(year, month - i, 1)).toISOString().slice(0, 7),
+  );
+}
+
+/** Groups paid orders into the given IST month keys; orders outside them are ignored. */
+export function groupRevenueByMonth(
+  keys: string[],
+  paid: { amountPaise: number; paidAt: Date | null }[],
+) {
   const totals = new Map(keys.map((k) => [k, { paise: 0, orders: 0 }]));
   for (const o of paid) {
-    const key = new Date(+o.paidAt! + IST_OFFSET_MS).toISOString().slice(0, 7);
+    if (!o.paidAt) continue;
+    const key = new Date(+o.paidAt + IST_OFFSET_MS).toISOString().slice(0, 7);
     const t = totals.get(key);
     if (t) {
       t.paise += o.amountPaise;
@@ -329,6 +342,17 @@ export async function monthlyRevenue(now = new Date()) {
     }
   }
   return keys.map((month) => ({ month, ...totals.get(month)! }));
+}
+
+/** Paid totals for the last 12 IST months (by payment date), newest first. */
+export async function monthlyRevenue(now = new Date()) {
+  const keys = lastTwelveMonthKeys(now);
+  const oldest = istMonthRange(keys[11])!.start;
+  const paid = await db.businessBillingOrder.findMany({
+    where: { paidAt: { gte: oldest } },
+    select: { amountPaise: true, paidAt: true },
+  });
+  return groupRevenueByMonth(keys, paid);
 }
 
 export async function listUsers({ q, page }: { q?: string; page?: number }) {

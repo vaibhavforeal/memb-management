@@ -57,7 +57,9 @@ export async function getContext(
     include: { business: { include: { branches: true } } },
   });
   if (!access) {
-    if (user.platformAdmin) redirect("/admin");
+    // Admins without a workspace go to the console (or wait, if it is disabled).
+    if (user.platformAdmin)
+      redirect(process.env.CONSOLE_URL || "/access-pending");
     if (
       user.emailVerified &&
       (await db.account.findFirst({

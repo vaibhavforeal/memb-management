@@ -5,6 +5,7 @@ import type { ActionState } from "@/app/actions";
 import { createBusiness } from "@/lib/admin";
 import { saveBusinessFee } from "@/lib/business-billing";
 import { requireConsoleAdmin } from "@/lib/console/guard";
+import { trialDateLabel } from "@/lib/workspace-access";
 import {
   extendTrial,
   grantSupportAccess,
@@ -47,7 +48,7 @@ export async function consoleAction(
         businessId,
         Number(field(f, "days")),
       );
-      message = `Trial extended to ${trialEndsAt.toISOString().slice(0, 10)}.`;
+      message = `Trial extended to ${trialDateLabel(trialEndsAt)}.`;
     } else if (op === "console-mark-paid") {
       await markPaidThrough(
         admin.id,
@@ -66,13 +67,16 @@ export async function consoleAction(
       await resendInvitation(admin.id, businessId);
       message = "Invitation resent.";
     } else if (op === "console-support") {
+      // Check before creating the grant so a misconfiguration leaves no grant or audit row.
+      const mainUrl = process.env.BETTER_AUTH_URL;
+      if (!mainUrl) throw new Error("Main site URL not configured.");
       const grant = await grantSupportAccess(
         admin.id,
         businessId,
         field(f, "reason"),
       );
       message = "Audited support access started for 30 minutes.";
-      redirectTo = `${process.env.BETTER_AUTH_URL}/support/start?grant=${grant.id}`;
+      redirectTo = `${mainUrl}/support/start?grant=${grant.id}`;
     } else if (op === "console-admin") {
       const grant = field(f, "grant");
       if (grant !== "true" && grant !== "false")

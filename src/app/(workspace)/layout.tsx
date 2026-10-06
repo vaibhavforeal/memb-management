@@ -34,6 +34,7 @@ export default async function WorkspaceLayout({
         email: user.email,
         platformAdmin: user.platformAdmin,
       }}
+      consoleUrl={process.env.CONSOLE_URL || undefined}
       role={ctx.role}
       support={ctx.support}
       dryRun={process.env.WHATSAPP_DRY_RUN === "true"}

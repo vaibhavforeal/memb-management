@@ -92,14 +92,14 @@ export default async function UsersPage({
           </span>
           <div className="flex gap-2">
             {page > 1 && (
-              <Link href={link(page - 1)}>
-                <Button variant="secondary">Previous</Button>
-              </Link>
+              <Button asChild variant="secondary">
+                <Link href={link(page - 1)}>Previous</Link>
+              </Button>
             )}
             {page < pages && (
-              <Link href={link(page + 1)}>
-                <Button variant="secondary">Next</Button>
-              </Link>
+              <Button asChild variant="secondary">
+                <Link href={link(page + 1)}>Next</Link>
+              </Button>
             )}
           </div>
         </div>

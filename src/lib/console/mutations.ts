@@ -1,6 +1,8 @@
 import { db } from "../db";
 import { hashToken, secretToken } from "../security";
 import { sendEmail } from "../mail";
+import { dayString, todayIST } from "../domain";
+import { trialDateLabel } from "../workspace-access";
 
 const DAY_MS = 86400000;
 
@@ -28,10 +30,17 @@ export function canRevokeAdmin(
   return null;
 }
 
-/** Validates the "mark paid through" form: a YYYY-MM-DD date and a 10–500 char note. */
+/** Latest allowed "paid through" date: two years after today (IST). */
+export const MARK_PAID_MAX_YEARS = 2;
+
+/**
+ * Validates the "mark paid through" form: a YYYY-MM-DD date from today (IST)
+ * up to two years ahead, and a 10–500 char note.
+ */
 export function parseMarkPaid(
   date: string,
   note: string,
+  now = new Date(),
 ): { paidThrough: Date; note: string } {
   const trimmed = note.trim();
   if (trimmed.length < 10 || trimmed.length > 500)
@@ -44,6 +53,15 @@ export function parseMarkPaid(
     paidThrough.toISOString().slice(0, 10) !== value
   )
     throw new Error("Enter a valid date for paid through.");
+  const today = todayIST(now);
+  const latest = new Date(today);
+  latest.setUTCFullYear(latest.getUTCFullYear() + MARK_PAID_MAX_YEARS);
+  if (paidThrough < today)
+    throw new Error("Paid through cannot be in the past.");
+  if (paidThrough > latest)
+    throw new Error(
+      `Paid through can be at most ${MARK_PAID_MAX_YEARS} years ahead (${dayString(latest)}).`,
+    );
   return { paidThrough, note: trimmed };
 }
 
@@ -85,7 +103,7 @@ export async function extendTrial(
         businessId,
         actorId,
         action: "CONSOLE_TRIAL_EXTENDED",
-        detail: `Trial extended by ${days} days to ${trialEndsAt.toISOString().slice(0, 10)}`,
+        detail: `Trial extended by ${days} days to ${trialDateLabel(trialEndsAt)}`,
       },
     });
     return trialEndsAt;
@@ -141,7 +159,11 @@ export async function toggleBusinessStatus(
   });
 }
 
-/** Re-issues the latest pending invitation for a workspace and emails it. */
+/**
+ * Re-issues the latest pending invitation for a workspace and emails it.
+ * The token rotation and its audit row commit together before the email is
+ * sent, so a mail failure never leaves an unaudited rotation behind.
+ */
 export async function resendInvitation(actorId: string, businessId: string) {
   await requireBusiness(businessId);
   const invitation = await db.invitation.findFirst({
@@ -150,27 +172,29 @@ export async function resendInvitation(actorId: string, businessId: string) {
   });
   if (!invitation) throw new Error("No pending invitation found.");
   const token = secretToken();
-  await db.invitation.update({
-    where: { id: invitation.id },
-    data: {
-      tokenHash: hashToken(token),
-      expiresAt: new Date(Date.now() + 7 * DAY_MS),
-    },
-  });
+  await db.$transaction([
+    db.invitation.update({
+      where: { id: invitation.id },
+      data: {
+        tokenHash: hashToken(token),
+        expiresAt: new Date(Date.now() + 7 * DAY_MS),
+      },
+    }),
+    db.auditLog.create({
+      data: {
+        businessId,
+        actorId,
+        action: "CONSOLE_INVITE_RESENT",
+        entityId: invitation.id,
+        detail: `Invitation resent to ${invitation.email}`,
+      },
+    }),
+  ]);
   await sendEmail(
     invitation.email,
     "Your membrr invitation",
     `${process.env.BETTER_AUTH_URL}/invite/${token}`,
   );
-  await db.auditLog.create({
-    data: {
-      businessId,
-      actorId,
-      action: "CONSOLE_INVITE_RESENT",
-      entityId: invitation.id,
-      detail: `Invitation resent to ${invitation.email}`,
-    },
-  });
 }
 
 /** Creates a 30-minute support grant plus its audit entry. Sets no cookies. */

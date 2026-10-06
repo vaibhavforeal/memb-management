@@ -17,7 +17,8 @@ export default async function OnboardingPage() {
   const user = await db.user.findUniqueOrThrow({
     where: { id: sessionUser.id },
   });
-  if (user.platformAdmin) redirect("/admin");
+  if (user.platformAdmin)
+    redirect(process.env.CONSOLE_URL || "/access-pending");
   if (
     await db.staffAccess.findFirst({
       where: { userId: user.id },

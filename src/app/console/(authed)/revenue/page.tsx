@@ -6,7 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, NativeSelect } from "@/components/ui/input";
 import { requireConsoleAdmin } from "@/lib/console/guard";
-import { listOrders, monthlyRevenue } from "@/lib/console/queries";
+import {
+  listOrders,
+  monthlyRevenue,
+  orderMonthField,
+} from "@/lib/console/queries";
 import { dateLabel, money } from "@/lib/domain";
 
 export const dynamic = "force-dynamic";
@@ -28,6 +32,9 @@ export default async function RevenuePage({
     listOrders({ q, status, month, page: Number(first(sp.page)) || 1 }),
     monthlyRevenue(),
   ]);
+  // The month filter uses the payment date for paid orders, otherwise the creation date.
+  const monthLabel =
+    orderMonthField(status) === "paidAt" ? "Paid in (IST)" : "Created in (IST)";
   const filterParams = () => {
     const params = new URLSearchParams();
     if (q) params.set("q", q);
@@ -46,12 +53,12 @@ export default async function RevenuePage({
         title="Revenue"
         description={`${total} orders matching`}
         action={
-          <a href={`/api/console/orders.csv?${filterParams()}`}>
-            <Button type="button" variant="secondary">
+          <Button asChild variant="secondary">
+            <a href={`/api/console/orders.csv?${filterParams()}`}>
               <Download />
               Export CSV
-            </Button>
-          </a>
+            </a>
+          </Button>
         }
       />
       <Card className="mb-3">
@@ -91,12 +98,15 @@ export default async function RevenuePage({
           <option value="paid">Paid</option>
           <option value="pending">Pending</option>
         </NativeSelect>
-        <Input
-          name="month"
-          type="month"
-          defaultValue={month}
-          className="max-w-44"
-        />
+        <label className="flex items-center gap-2 text-xs text-muted-foreground">
+          {monthLabel}
+          <Input
+            name="month"
+            type="month"
+            defaultValue={month}
+            className="max-w-44"
+          />
+        </label>
         <Button type="submit" variant="secondary">
           Filter
         </Button>
@@ -160,14 +170,14 @@ export default async function RevenuePage({
           </span>
           <div className="flex gap-2">
             {page > 1 && (
-              <Link href={link(page - 1)}>
-                <Button variant="secondary">Previous</Button>
-              </Link>
+              <Button asChild variant="secondary">
+                <Link href={link(page - 1)}>Previous</Link>
+              </Button>
             )}
             {page < pages && (
-              <Link href={link(page + 1)}>
-                <Button variant="secondary">Next</Button>
-              </Link>
+              <Button asChild variant="secondary">
+                <Link href={link(page + 1)}>Next</Link>
+              </Button>
             )}
           </div>
         </div>

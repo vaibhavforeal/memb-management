@@ -76,7 +76,7 @@ export async function mutate(
       return {
         ok: true,
         message: "Support access ended.",
-        redirectTo: process.env.CONSOLE_URL ?? "/dashboard",
+        redirectTo: process.env.CONSOLE_URL || "/dashboard",
       };
     }
     const ctx = await getContext();

@@ -31,6 +31,7 @@ export default async function WorkspaceDetailPage({
     where: { businessId: id, userId: admin.id, role: "OWNER" },
     select: { id: true },
   });
+  const mainUrl = process.env.BETTER_AUTH_URL;
   const pending = b.invitations.length > 0;
   const hidden = <input type="hidden" name="businessId" value={b.id} />;
   const send = { serverAction: consoleAction, className: "" } as const;
@@ -47,13 +48,10 @@ export default async function WorkspaceDetailPage({
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap items-start gap-3">
-            {ownerAccess && (
-              <a
-                href={`${process.env.BETTER_AUTH_URL}/open/${b.id}`}
-                className="inline-flex"
-              >
-                <Button type="button">Open workspace</Button>
-              </a>
+            {ownerAccess && mainUrl && (
+              <Button asChild>
+                <a href={`${mainUrl}/open/${b.id}`}>Open workspace</a>
+              </Button>
             )}
             <Dialog
               title="Configure monthly business fee"

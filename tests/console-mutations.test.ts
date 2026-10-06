@@ -54,14 +54,16 @@ describe("canRevokeAdmin", () => {
 
 describe("parseMarkPaid", () => {
   it("accepts a valid date and note", () => {
-    expect(parseMarkPaid("2026-11-30", "  Paid by bank transfer  ")).toEqual({
+    expect(
+      parseMarkPaid("2026-11-30", "  Paid by bank transfer  ", now),
+    ).toEqual({
       paidThrough: new Date("2026-11-30T00:00:00.000Z"),
       note: "Paid by bank transfer",
     });
   });
   it("rejects notes outside 10–500 characters", () => {
-    expect(() => parseMarkPaid("2026-11-30", "short")).toThrow(/10–500/);
-    expect(() => parseMarkPaid("2026-11-30", "x".repeat(501))).toThrow(
+    expect(() => parseMarkPaid("2026-11-30", "short", now)).toThrow(/10–500/);
+    expect(() => parseMarkPaid("2026-11-30", "x".repeat(501), now)).toThrow(
       /10–500/,
     );
   });
@@ -70,5 +72,37 @@ describe("parseMarkPaid", () => {
     expect(() => parseMarkPaid("", note)).toThrow(/valid date/);
     expect(() => parseMarkPaid("30/11/2026", note)).toThrow(/valid date/);
     expect(() => parseMarkPaid("2026-02-30", note)).toThrow(/valid date/);
+  });
+  it("accepts today (IST) through exactly two years ahead", () => {
+    const note = "Paid by bank transfer";
+    // 2026-10-06T20:00Z is already 7 Oct in IST.
+    const lateUtc = new Date("2026-10-06T20:00:00.000Z");
+    expect(parseMarkPaid("2026-10-06", note, now).paidThrough).toEqual(
+      new Date("2026-10-06T00:00:00.000Z"),
+    );
+    expect(parseMarkPaid("2028-10-06", note, now).paidThrough).toEqual(
+      new Date("2028-10-06T00:00:00.000Z"),
+    );
+    expect(parseMarkPaid("2028-10-07", note, lateUtc).paidThrough).toEqual(
+      new Date("2028-10-07T00:00:00.000Z"),
+    );
+  });
+  it("rejects dates more than two years ahead (typo guard)", () => {
+    const note = "Paid by bank transfer";
+    expect(() => parseMarkPaid("2028-10-07", note, now)).toThrow(
+      /at most 2 years ahead \(2028-10-06\)/,
+    );
+    expect(() => parseMarkPaid("2062-10-06", note, now)).toThrow(
+      /at most 2 years/,
+    );
+  });
+  it("rejects dates before today (IST)", () => {
+    const note = "Paid by bank transfer";
+    expect(() => parseMarkPaid("2026-10-05", note, now)).toThrow(/past/);
+    expect(() => parseMarkPaid("2020-01-01", note, now)).toThrow(/past/);
+    // At 20:00 UTC on 6 Oct it is 7 Oct in IST, so 6 Oct is already past.
+    expect(() =>
+      parseMarkPaid("2026-10-06", note, new Date("2026-10-06T20:00:00.000Z")),
+    ).toThrow(/past/);
   });
 });

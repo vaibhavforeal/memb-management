@@ -44,6 +44,7 @@ export function Shell({
   manual,
   date,
   trialEndsAt,
+  consoleUrl,
 }: {
   children: React.ReactNode;
   business: {
@@ -59,6 +60,8 @@ export function Shell({
   manual: boolean;
   date: string;
   trialEndsAt?: string;
+  /** Platform console URL; the admin link is hidden when unset. */
+  consoleUrl?: string;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -145,7 +148,15 @@ export function Shell({
           {role === "OWNER" && link("/billing", "Business billing", CreditCard)}
         </nav>
         <div className="mt-auto pt-4">
-          {user.platformAdmin && link("/admin", "Platform admin", ShieldCheck)}
+          {user.platformAdmin && consoleUrl && (
+            <a
+              href={consoleUrl}
+              className="group flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] text-white/70 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-white"
+            >
+              <ShieldCheck size={17} />
+              Platform admin
+            </a>
+          )}
           <div className="my-3 flex items-center gap-2.5 border-t border-white/10 pt-3">
             <Avatar name={user.name} />
             <div className="min-w-0 flex-1">
