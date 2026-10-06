@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 const config: NextConfig = {
   output: "standalone",
+  allowedDevOrigins: ["console.localhost"],
   serverExternalPackages: ["pg", "pg-boss", "nodemailer"],
   experimental: { serverActions: { bodySizeLimit: "3mb" } },
   async headers() {
