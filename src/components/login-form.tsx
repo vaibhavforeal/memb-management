@@ -9,10 +9,12 @@ export function LoginForm({
   demo = false,
   googleEnabled = false,
   initialError = "",
+  redirectTo = "/dashboard",
 }: {
   demo?: boolean;
   googleEnabled?: boolean;
   initialError?: string;
+  redirectTo?: string;
 }) {
   const [error, setError] = useState(initialError);
   const [pending, setPending] = useState<"email" | "google" | null>(null);
@@ -31,7 +33,7 @@ export function LoginForm({
           });
           if (result.error)
             setError(result.error.message ?? "Unable to sign in.");
-          else window.location.href = "/dashboard";
+          else window.location.href = redirectTo;
         } catch {
           setError("Unable to connect. Try again.");
         } finally {

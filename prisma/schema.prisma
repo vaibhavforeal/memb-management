@@ -428,8 +428,8 @@ model Message {
 }
 model AuditLog {
   id String @id @default(cuid())
-  businessId String
-  business Business @relation(fields: [businessId], references: [id])
+  businessId String?
+  business Business? @relation(fields: [businessId], references: [id])
   actorId String
   action String
   entityId String?
