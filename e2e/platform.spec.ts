@@ -1,11 +1,12 @@
 import { test, expect } from "@playwright/test";
 import { db } from "../src/lib/db";
 import { ensureLocalTest } from "../scripts/test-support";
-import { signIn } from "./sign-in";
+import { DEMO_PASSWORD, signIn } from "./sign-in";
 import { saveMember } from "../src/lib/services";
 import { samplePng } from "../scripts/shared-file-fixtures";
 import { todayIST } from "../src/lib/domain";
 import QRCode from "qrcode";
+const CONSOLE = "http://console.localhost:3000";
 test.beforeAll(() => ensureLocalTest());
 test.afterAll(() => db.$disconnect());
 const loginCookies = new Map<
@@ -19,13 +20,18 @@ async function login(
   const existing = loginCookies.get(email);
   if (existing) {
     await page.context().addCookies(existing);
-    await page.goto(email.startsWith("admin") ? "/admin" : "/dashboard");
+    await page.goto(
+      email.startsWith("admin") ? `${CONSOLE}/workspaces` : "/dashboard",
+    );
     return;
   }
-  await signIn(page, email);
-  await page.waitForURL(
-    email.startsWith("admin") ? "**/admin" : "**/dashboard",
-  );
+  if (email.startsWith("admin")) {
+    await signIn(page, email, DEMO_PASSWORD, 4, CONSOLE);
+    await page.waitForURL(`${CONSOLE}/`);
+  } else {
+    await signIn(page, email);
+    await page.waitForURL("**/dashboard");
+  }
   loginCookies.set(email, await page.context().cookies());
 }
 test("owner journey: member, membership, partial payment, receipt and attendance", async ({
@@ -315,14 +321,19 @@ test("platform administrator sees businesses without automatic tenant access", a
   page,
 }) => {
   await login(page, "admin@membrr.local");
+  await page.goto(`${CONSOLE}/workspaces`);
   await expect(
     page.getByRole("heading", { name: "Workspaces", exact: true }),
   ).toBeVisible();
+  await page.locator('a[href^="/workspaces/"]').first().click();
   await expect(
-    page.getByRole("button", { name: "Support access" }).first(),
+    page.getByRole("button", { name: "Support access" }),
   ).toBeVisible();
+  // Signed in on the main host too, the admin still gets no automatic tenant
+  // access: /dashboard sends them back to the console.
+  await signIn(page, "admin@membrr.local");
   await page.goto("/dashboard");
-  await expect(page).toHaveURL(/\/admin$/);
+  await expect(page).toHaveURL(`${CONSOLE}/`);
 });
 test("mobile navigation works without horizontal page overflow", async ({
   page,

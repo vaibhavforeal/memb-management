@@ -70,7 +70,7 @@ export function ConsoleShell({
         </button>
         <Link
           href="/"
-          className="flex h-12 items-center gap-2 px-2 focus-visible:outline-white"
+          className="flex h-12 items-center gap-2 pl-2 pr-10 focus-visible:outline-white lg:pr-2"
         >
           <Wordmark tone="light" />
           <span className="eyebrow !text-white/50">Console</span>
