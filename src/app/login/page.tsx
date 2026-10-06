@@ -2,10 +2,11 @@ import { Wordmark } from "@/components/wordmark";
 import { LoginForm } from "@/components/login-form";
 import { connection } from "next/server";
 import Link from "next/link";
+import { safeNext } from "@/lib/safe-next";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; auth_error?: string }>;
+  searchParams: Promise<{ error?: string; auth_error?: string; next?: string }>;
 }) {
   await connection();
   const query = await searchParams;
@@ -45,6 +46,7 @@ export default async function LoginPage({
           <LoginForm
             googleEnabled={googleEnabled}
             initialError={signInError}
+            redirectTo={safeNext(query.next)}
             demo={
               process.env.NODE_ENV !== "production" &&
               process.env.SEED_DEMO === "true"
