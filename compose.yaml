@@ -1,0 +1,103 @@
+name: clubhouse
+services:
+  database:
+    image: postgres:18-bookworm
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: clubhouse
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      POSTGRES_DB: clubhouse
+      POSTGRES_INITDB_ARGS: --encoding=UTF8
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U clubhouse -d clubhouse"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [internal]
+  migrate:
+    build: { context: ., target: operations }
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://clubhouse:${POSTGRES_PASSWORD}@database:5432/clubhouse
+    depends_on:
+      database: { condition: service_healthy }
+    networks: [internal]
+  web:
+    build: { context: ., target: web }
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://clubhouse:${POSTGRES_PASSWORD}@database:5432/clubhouse
+      BETTER_AUTH_URL: https://${APP_DOMAIN}
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    networks: [internal, public]
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 60s
+      timeout: 10s
+      start_period: 120s
+      retries: 3
+  worker:
+    profiles: [cloud-messaging]
+    build: { context: ., target: worker }
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://clubhouse:${POSTGRES_PASSWORD}@database:5432/clubhouse
+      BETTER_AUTH_URL: https://${APP_DOMAIN}
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    networks: [internal, public]
+  proxy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment: { APP_DOMAIN: "${APP_DOMAIN}" }
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./ops/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on: [web]
+    networks: [public]
+  backup:
+    profiles: [backups]
+    build: { context: ./ops, dockerfile: backup.Dockerfile }
+    restart: unless-stopped
+    env_file: .env.backup
+    environment:
+      PGHOST: database
+      PGUSER: clubhouse
+      PGDATABASE: clubhouse
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - backup_cache:/root/.cache/restic
+    networks: [internal, public]
+    depends_on:
+      database: { condition: service_healthy }
+  monitor:
+    profiles: [monitoring]
+    image: curlimages/curl:8.18.0
+    restart: unless-stopped
+    environment:
+      MONITOR_HEALTHCHECK_URL: ${MONITOR_HEALTHCHECK_URL}
+    entrypoint: ["sh", "/monitor.sh"]
+    volumes: ["./ops/monitor.sh:/monitor.sh:ro"]
+    networks: [public]
+    depends_on: [web]
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:
+  backup_cache:
+networks:
+  internal: { internal: true }
+  public:

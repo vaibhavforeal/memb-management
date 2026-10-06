@@ -1,0 +1,11 @@
+node_modules
+.next
+.local
+.env
+.env.*
+.git
+.superdesign
+artifacts
+test-results
+coverage
+*.tsbuildinfo

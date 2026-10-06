@@ -1,0 +1,197 @@
+@import "tailwindcss";
+:root {
+  /* prettier-ignore */
+  --brand-gradient: linear-gradient(135deg, #0b1f4b 0%, #1e3a8a 45%, #2563eb 100%);
+  --brand-gradient-soft: linear-gradient(135deg, #1e40af, #2563eb);
+  --sidebar-gradient: linear-gradient(180deg, #0b1f4b, #102a63);
+}
+@theme inline {
+  --color-background: #f6f8fc;
+  --color-foreground: #0b1220;
+  --color-card: #ffffff;
+  --color-card-foreground: #0b1220;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #0b1220;
+  --color-primary: #1d4ed8;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #eef2fa;
+  --color-secondary-foreground: #0b1220;
+  --color-muted: #eef2fa;
+  --color-muted-foreground: #55627a;
+  --color-accent: #e8efff;
+  --color-accent-foreground: #1e3a8a;
+  --color-destructive: #b42318;
+  --color-border: #dde4f0;
+  --color-input: #cbd5e6;
+  --color-ring: #2563eb;
+  --font-sans: "Geist", "Segoe UI", Arial, sans-serif;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+}
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  html {
+    scroll-padding-top: 5rem;
+    scroll-behavior: smooth;
+  }
+  body {
+    margin: 0;
+    background: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+  }
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    -webkit-tap-highlight-color: transparent;
+  }
+  button:not(:disabled),
+  select {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: wait;
+  }
+  ::selection {
+    background: #2563eb33;
+  }
+  input,
+  textarea,
+  select {
+    color-scheme: light;
+  }
+  input[type="checkbox"] {
+    accent-color: #1d4ed8;
+    width: 16px;
+    height: 16px;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 3px;
+  }
+}
+@layer utilities {
+  .bg-brand-gradient {
+    background-image: var(--brand-gradient);
+  }
+  .bg-brand-gradient-soft {
+    background-image: var(--brand-gradient-soft);
+  }
+  .bg-sidebar-gradient {
+    background-image: var(--sidebar-gradient);
+  }
+}
+@layer components {
+  .auth-backdrop {
+    background-color: var(--color-background);
+    background-image:
+      radial-gradient(60rem 30rem at 85% -10%, #dbe7ff 0%, transparent 60%),
+      radial-gradient(40rem 25rem at -10% 110%, #e6eeff 0%, transparent 60%);
+  }
+  .page-heading {
+    font-size: clamp(24px, 3vw, 30px);
+    font-weight: 600;
+    letter-spacing: -1px;
+    line-height: 1.25;
+  }
+  .eyebrow {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.8px;
+    color: var(--color-muted-foreground);
+  }
+  .table-wrap {
+    width: 100%;
+    overflow-x: auto;
+  }
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    white-space: nowrap;
+    text-align: left;
+  }
+  .data-table th {
+    height: 32px;
+    padding: 0 12px;
+    background: #f1f5fc;
+    color: var(--color-muted-foreground);
+    font-size: 11px;
+    font-weight: 500;
+  }
+  .data-table td {
+    padding: 6px 12px;
+    border-top: 1px solid var(--color-border);
+    font-size: 13px;
+  }
+  .data-table tbody tr:hover {
+    background: #f8faff;
+  }
+  .field {
+    display: grid;
+    gap: 5px;
+    font-size: 12px;
+    color: var(--color-muted-foreground);
+  }
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .stat-number {
+    font-size: clamp(25px, 2.6vw, 34px);
+    letter-spacing: -1.2px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .subtle-grid {
+    background-image: radial-gradient(#0b1f4b14 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+  @media (max-width: 640px) {
+    .form-grid {
+      grid-template-columns: 1fr;
+    }
+    .data-table td,
+    .data-table th {
+      padding-left: 10px;
+      padding-right: 10px;
+    }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+@media print {
+  body {
+    background: white;
+    color: black;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .receipt {
+    border: 0 !important;
+    background: white !important;
+    color: black !important;
+    padding: 20px !important;
+  }
+  .receipt * {
+    color: black !important;
+    border-color: #ddd !important;
+  }
+}

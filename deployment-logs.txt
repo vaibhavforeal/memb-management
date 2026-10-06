@@ -1,0 +1,90 @@
+2026-10-03T20:13:35.896Z Deployment request accepted
+2026-10-03T20:13:35.899Z Deployment ID: 8ff75a50-8b76-4659-af0a-50f4f943ce49
+2026-10-03T20:13:35.902Z Deployment lock acquired
+2026-10-03T20:13:35.969Z Starting deployment execution...
+2026-10-03T20:13:37.509Z Extracting zip file...
+2026-10-03T20:13:37.934Z Zip extraction complete
+2026-10-03T20:13:37.941Z Setting file permissions on extracted content...
+2026-10-03T20:13:37.970Z File permissions set successfully
+2026-10-03T20:13:38.119Z Starting QuickDeployBuilder - Perform Server Side Build: True
+2026-10-03T20:13:38.205Z QuickDeploy build started
+2026-10-03T20:13:38.214Z Source path: /tmp/quickdeploy/8ff75a50-8b76-4659-af0a-50f4f943ce49/extracted
+2026-10-03T20:13:38.238Z Output path: /home/site/wwwroot
+2026-10-03T20:13:38.244Z Run build: True
+2026-10-03T20:13:38.255Z Clean destination before deployment: True
+2026-10-03T20:13:38.266Z Running Oryx build...
+2026-10-03T20:13:38.276Z Cleaning destination directory...
+2026-10-03T20:13:38.296Z Executing Oryx build command...
+2026-10-03T20:13:38.305Z Build command: oryx build /tmp/quickdeploy/8ff75a50-8b76-4659-af0a-50f4f943ce49/extracted -o /home/site/wwwroot --platform nodejs --platform-version 24 -p virtualenv_name= --log-file /tmp/build-debug.log  -i /tmp/8df218acf8d3a26 -p compress_node_modules=tar-gz | tee /tmp/oryx-build.log
+2026-10-03T20:13:38.311Z Executing: /bin/bash -c "set -o pipefail; oryx build /tmp/quickdeploy/8ff75a50-8b76-4659-af0a-50f4f943ce49/extracted -o /home/site/wwwroot --platform nodejs --platform-version 24 -p virtualenv_name= --log-file /tmp/build-debug.log  -i /tmp/8df218acf8d3a26 -p compress_node_modules=tar-gz | tee /tmp/oryx-build.log"
+2026-10-03T20:13:39.012Z Operation performed by Microsoft Oryx, https://github.com/Microsoft/Oryx
+2026-10-03T20:13:39.022Z You can report issues at https://github.com/Microsoft/Oryx/issues
+2026-10-03T20:13:39.032Z Oryx Version: 0.2.20260728.2+203b718c5847f8ff2fa0f9aaeb1987e6b1bd30d7, Commit: 203b718c5847f8ff2fa0f9aaeb1987e6b1bd30d7, ReleaseTagName: 20260728.2
+2026-10-03T20:13:39.043Z Build Operation ID: 77f8791cd0fdecb6
+2026-10-03T20:13:39.056Z OS Type           : noble
+2026-10-03T20:13:39.067Z Image Type        : githubactions
+2026-10-03T20:13:39.079Z Primary SDK Storage URL: https://oryx-cdn.microsoft.io
+2026-10-03T20:13:39.090Z Backup SDK Storage URL: 
+2026-10-03T20:13:39.102Z ACR SDK Registry URL: (not set)
+2026-10-03T20:13:39.112Z SDK provider status:
+2026-10-03T20:13:39.122Z   External ACR SDK provider: Enabled
+2026-10-03T20:13:39.130Z   External SDK provider: Enabled
+2026-10-03T20:13:39.139Z   Direct ACR SDK provider: Disabled
+2026-10-03T20:13:39.162Z   Blob SDK provider: Enabled
+2026-10-03T20:13:39.171Z External ACR SDK provider is enabled. Only using user-specified platform: nodejs
+2026-10-03T20:13:39.190Z Detecting platforms...
+2026-10-03T20:13:40.445Z External ACR provider resolved version '24.18.0' for nodejs.
+2026-10-03T20:13:40.458Z Version resolved using external ACR SDK provider.
+2026-10-03T20:13:40.476Z Detected following platforms:
+2026-10-03T20:13:40.490Z   nodejs: 24.18.0
+2026-10-03T20:13:40.504Z Requesting SDK from ACR via external provider: nodejs 24.18.0 (noble)
+2026-10-03T20:13:41.738Z Successfully pulled SDK from ACR via external provider: nodejs 24.18.0
+2026-10-03T20:13:41.745Z SDK for 'nodejs' version '24.18.0' fetched via external ACR provider.
+2026-10-03T20:13:41.766Z Version '24.18.0' of platform 'nodejs' is not installed. Generating script to install it...
+2026-10-03T20:13:41.810Z Detected the following frameworks: Typescript,Next.js
+2026-10-03T20:13:41.954Z Using intermediate directory '/tmp/8df218acf8d3a26'.
+2026-10-03T20:13:41.963Z Copying files to the intermediate directory...
+2026-10-03T20:13:42.035Z Copying files to intermediate directory done in 1 sec(s).
+2026-10-03T20:13:42.043Z Source directory     : /tmp/8df218acf8d3a26
+2026-10-03T20:13:42.051Z Destination directory: /home/site/wwwroot
+2026-10-03T20:13:42.058Z Installing platform...
+2026-10-03T20:13:42.119Z Downloading and extracting 'nodejs' version '24.18.0' to '/tmp/oryx/platforms/nodejs/24.18.0'...
+2026-10-03T20:13:42.124Z Detected image debian flavor: noble.
+2026-10-03T20:13:42.129Z SDK binary download was skipped. Looking for cached tarball...
+2026-10-03T20:13:42.139Z Found tarball at /var/OryxAcrSdks/nodejs/nodejs-noble-24.18.0.tar.gz
+2026-10-03T20:13:45.000Z Successfully extracted nodejs version 24.18.0 from cached tarball.
+2026-10-03T20:13:45.658Z Platform installation done in 2 sec(s).
+2026-10-03T20:13:45.814Z Running build script snippets...
+2026-10-03T20:13:46.190Z npm warn config production Use `--omit=dev` instead.
+2026-10-03T20:13:46.294Z Creating directory for command manifest file if it does not exist
+2026-10-03T20:13:46.300Z npm warn config production Use `--omit=dev` instead.
+2026-10-03T20:13:46.309Z Creating a manifest file...
+2026-10-03T20:13:46.522Z Node Build Command Manifest file created.
+2026-10-03T20:13:46.578Z Using Node version:
+2026-10-03T20:13:46.746Z v24.18.0
+2026-10-03T20:13:46.904Z Using Npm version:
+2026-10-03T20:13:46.913Z 11.16.0
+2026-10-03T20:13:46.949Z Running 'npm install'...
+2026-10-03T20:14:26.107Z added 388 packages, and audited 389 packages in 40s
+2026-10-03T20:14:26.119Z npm warn allow-scripts 4 packages have install scripts not yet covered by allowScripts:
+2026-10-03T20:14:26.130Z 63 packages are looking for funding
+2026-10-03T20:14:26.134Z npm warn allow-scripts   @embedded-postgres/linux-x64@18.4.0-beta.17 (postinstall: node scripts/hydrate-symlinks.js)
+2026-10-03T20:14:26.146Z npm warn allow-scripts   @prisma/engines@7.10.0 (postinstall: node scripts/postinstall.js)
+2026-10-03T20:14:26.183Z npm warn allow-scripts   esbuild@0.28.2 (postinstall: node install.js)
+2026-10-03T20:14:26.207Z npm warn allow-scripts   prisma@7.10.0 (preinstall: node scripts/preinstall-entry.js)
+2026-10-03T20:14:26.224Z npm warn allow-scripts
+2026-10-03T20:14:26.238Z npm warn allow-scripts Run `npm approve-scripts --allow-scripts-pending` to review, or `npm approve-scripts <pkg>` to allow.
+2026-10-03T20:14:26.256Z npm notice
+2026-10-03T20:14:26.267Z npm notice New major version of npm available! 11.16.0 -> 12.2.0
+2026-10-03T20:14:26.282Z npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+2026-10-03T20:14:26.307Z npm notice To update run: npm install -g npm@12.2.0
+2026-10-03T20:14:26.326Z npm notice
+2026-10-03T20:14:26.382Z Package install done in 41 sec(s).
+2026-10-03T20:14:26.418Z Running 'npm run build'...
+2026-10-03T20:14:26.599Z npm warn config production Use `--omit=dev` instead.
+2026-10-03T20:14:26.647Z > clubhouse-memberships@0.1.0 build
+2026-10-03T20:14:26.669Z > prisma generate && next build && tsx scripts/prepare-standalone.ts
+2026-10-03T20:14:28.053Z Failed to load config file "/tmp/8df218acf8d3a26" as a TypeScript/JavaScript module. Error: PrismaConfigEnvError: Cannot resolve environment variable: DATABASE_URL.
+2026-10-03T20:14:28.758Z Build process exited with code 1 (took 50.4s)
+2026-10-03T20:14:28.777Z QuickDeploy build failed: Build failed (exit code 1): Failed to load config file "/tmp/8df218acf8d3a26" as a TypeScript/JavaScript module. Error: PrismaConfigEnvError: Cannot resolve environment variable: DATABASE_URL.
+2026-10-03T20:14:28.791Z Deployment Failed. QuickDeploy deployment failed: Build failed (exit code 1): Failed to load config file "/tmp/8df218acf8d3a26" as a TypeScript/JavaScript module. Error: PrismaConfigEnvError: Cannot resolve environment variable: DATABASE_URL.

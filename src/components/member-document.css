@@ -1,0 +1,457 @@
+.document-frame {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+.document-scale {
+  transform-origin: top left;
+}
+.document-export {
+  font-family: Arial, Helvetica, sans-serif;
+}
+.member-document {
+  box-sizing: border-box;
+  width: 100%;
+  line-height: 1.35;
+  font-size: 26px;
+  -webkit-font-smoothing: antialiased;
+}
+.member-document * {
+  box-sizing: border-box;
+}
+.member-document h1,
+.member-document h2,
+.member-document h3,
+.member-document p,
+.member-document dl,
+.member-document dd {
+  margin: 0;
+}
+.member-document h1,
+.member-document h2,
+.member-document h3,
+.member-document p,
+.member-document dd,
+.member-document strong {
+  overflow-wrap: anywhere;
+}
+.doc-logo,
+.doc-portrait {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.doc-logo img,
+.doc-portrait img {
+  width: 100%;
+  height: 100%;
+}
+.doc-logo img {
+  object-fit: contain;
+}
+.doc-portrait img {
+  object-fit: cover;
+}
+.doc-logo {
+  width: 136px;
+  height: 136px;
+  border-radius: 10px;
+  background: #fff;
+  color: #1769c2;
+  font-size: 40px;
+  font-weight: 700;
+}
+.doc-portrait {
+  width: 125px;
+  height: 125px;
+  border-radius: 50%;
+  background: #eaf1fa;
+  color: #1769c2;
+  font-size: 44px;
+  font-weight: 700;
+  border: 3px solid #fff;
+}
+.bill-document {
+  min-height: 1450px;
+  padding: 44px 50px;
+  color: #1a1a1a;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+}
+.doc-business {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 30px;
+  margin-bottom: 22px;
+}
+.doc-business > div:first-child {
+  min-width: 0;
+}
+.doc-business h2 {
+  font-size: 40px;
+  color: #1769c2;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+}
+.doc-business p {
+  font-size: 24px;
+  color: #4b5563;
+  white-space: pre-line;
+  margin-top: 4px;
+}
+.bill-caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border-block: 2px solid #e9edf2;
+  padding: 16px 0;
+}
+.bill-caption h1 {
+  font-size: 28px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.bill-caption p {
+  flex-shrink: 0;
+  font-size: 24px;
+  color: #4b5563;
+}
+.doc-reference {
+  font-size: 17px;
+  color: #667085;
+  padding: 10px 0 20px;
+}
+.bill-member {
+  display: flex;
+  gap: 30px;
+  align-items: center;
+  background: #f7f8fa;
+  padding: 24px 30px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+.bill-member > div:last-child {
+  min-width: 0;
+}
+.bill-member h2 {
+  font-size: 34px;
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.bill-member p {
+  font-size: 23px;
+  color: #4b5563;
+  margin-top: 2px;
+}
+.doc-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+.doc-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 30px;
+  align-items: baseline;
+}
+.doc-row dt {
+  color: #667085;
+}
+.doc-row dd {
+  text-align: right;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.bill-term {
+  padding-bottom: 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+.bill-finances {
+  padding-top: 24px;
+}
+.doc-note {
+  font-size: 20px;
+  color: #667085;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+.bill-total {
+  margin: 22px -50px !important;
+  padding: 24px 50px;
+  background: #eff6ff;
+}
+.bill-total .doc-row {
+  align-items: center;
+}
+.bill-total dt {
+  color: #1769c2;
+  font-size: 32px;
+  font-weight: 700;
+}
+.bill-total dd {
+  color: #1769c2;
+  font-size: 40px;
+  font-weight: 700;
+}
+.bill-status {
+  margin-top: 20px !important;
+  color: #087f59;
+  text-align: right;
+  text-transform: uppercase;
+  font-size: 25px;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+.bill-status.is-due {
+  color: #a05a00;
+}
+.bill-payment {
+  border-top: 1px solid #e5e7eb;
+  margin-top: 26px;
+  padding-top: 22px;
+}
+.bill-payment h2 {
+  font-size: 23px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+.bill-payment .doc-rows {
+  font-size: 22px;
+}
+.doc-notice {
+  margin-top: 18px !important;
+  padding: 16px;
+  background: #fff3e5;
+  color: #863a13;
+  font-size: 21px;
+  border: 1px solid #f1cba5;
+}
+.bill-footer {
+  margin-top: auto;
+  padding-top: 32px;
+  font-size: 18px;
+  color: #667085;
+  text-align: center;
+}
+.bill-footer p:first-child {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 20px;
+}
+.bill-footer p + p {
+  margin-top: 6px;
+}
+.membership-card-document {
+  padding: 46px;
+  min-height: 700px;
+  background: #090b0d;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+}
+.card-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 26px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #e9c64b55;
+}
+.card-brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+.card-brand .doc-logo {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  font-size: 28px;
+}
+.card-brand h2 {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+.card-brand p {
+  font-size: 16px;
+  color: #e9c64b;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  margin-top: 4px;
+}
+.card-id {
+  text-align: right;
+  min-width: 180px;
+  max-width: 300px;
+  flex-shrink: 0;
+}
+.card-id p {
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #a3a8b0;
+  margin-bottom: 6px;
+}
+.card-id strong {
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.card-identity {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  flex-grow: 1;
+  padding-top: 40px;
+}
+.card-identity .doc-portrait {
+  width: 160px;
+  height: 160px;
+  border: 2px solid #e9c64b;
+  color: #e9c64b;
+  background: #25241d;
+  font-size: 56px;
+}
+.card-member {
+  flex: 1;
+  min-width: 0;
+}
+.card-member h1 {
+  font-size: 48px;
+  font-weight: 800;
+  text-transform: uppercase;
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  margin-bottom: 12px;
+}
+.card-member p {
+  font-size: 24px;
+  color: #e9c64b;
+  margin-bottom: 12px;
+}
+.card-member span {
+  font-size: 18px;
+  color: #a3a8b0;
+}
+.card-qr {
+  flex-shrink: 0;
+  padding: 14px;
+  border-radius: 12px;
+  background: #fff;
+  color: #090b0d;
+  text-align: center;
+}
+.card-qr img {
+  display: block;
+  width: 210px;
+  height: 210px;
+}
+.card-qr p {
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding-top: 8px;
+}
+.card-validity {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 24px;
+  margin-top: 36px;
+  padding: 22px 24px;
+  border-radius: 10px;
+  border-left: 4px solid #e9c64b;
+  background: #e9c64b0d;
+}
+.card-validity > div:first-child > p {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #a3a8b0;
+  margin-bottom: 5px;
+}
+.card-validity h3 {
+  font-size: 24px;
+  font-weight: 700;
+}
+.card-dates {
+  text-align: right;
+  font-size: 18px;
+  color: #e9c64b;
+}
+.card-dates strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 15px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.card-footer {
+  display: flex;
+  align-items: flex-end;
+  gap: 20px;
+  justify-content: space-between;
+  margin-top: 30px;
+  color: #a3a8b0;
+  font-size: 15px;
+}
+.card-footer p {
+  max-width: 70%;
+  white-space: pre-line;
+}
+.card-footer span {
+  max-width: 24%;
+  font-size: 12px;
+  text-align: right;
+}
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm;
+  }
+  .document-page {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+  }
+  .document-frame {
+    height: auto !important;
+    overflow: visible;
+  }
+  .document-scale {
+    transform: none !important;
+    zoom: 0.65;
+    margin-inline: auto;
+  }
+  .document-frame-receipt .document-scale {
+    zoom: 0.58;
+  }
+  .document-frame-card .document-scale {
+    zoom: 0.6;
+  }
+  .member-document {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .doc-row,
+  .doc-business,
+  .bill-member,
+  .bill-caption,
+  .bill-payment,
+  .bill-footer {
+    break-inside: avoid;
+  }
+  .membership-card-document {
+    break-inside: avoid;
+  }
+}

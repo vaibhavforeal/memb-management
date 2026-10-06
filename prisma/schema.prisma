@@ -1,0 +1,463 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id String @id
+  name String
+  email String @unique
+  emailVerified Boolean @default(false)
+  image String?
+  platformAdmin Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  sessions Session[]
+  accounts Account[]
+  access StaffAccess[]
+}
+model Session {
+  id String @id
+  expiresAt DateTime
+  token String @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId])
+}
+model Account {
+  id String @id
+  accountId String
+  providerId String
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken String?
+  refreshToken String?
+  idToken String?
+  accessTokenExpiresAt DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope String?
+  password String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([userId])
+}
+model Verification {
+  id String @id
+  identifier String
+  value String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([identifier])
+}
+model Business {
+  id String @id @default(cuid())
+  name String
+  slug String @unique
+  city String
+  phone String @default("")
+  address String @default("")
+  status String @default("ACTIVE")
+  createdAt DateTime @default(now())
+  renewalOffsets Int[] @default([7, 3, 0])
+  duesOffsets Int[] @default([1, 7])
+  reminderHour Int @default(10)
+  remindersEnabled Boolean @default(true)
+  messageLimit Int @default(10000)
+  monthlyFeePaise Int?
+  billingPaidThrough DateTime? @db.Date
+  trialRequired Boolean @default(true)
+  trialEndsAt DateTime?
+  billingOrders BusinessBillingOrder[]
+  logo BusinessLogo?
+  branches Branch[]
+  access StaffAccess[]
+  members Member[]
+  contacts Contact[]
+  plans Plan[]
+  memberships Membership[]
+  charges Charge[]
+  payments Payment[]
+  checkins Checkin[]
+  memberQrs MemberQr[]
+  connection WhatsAppConnection?
+  templates MessageTemplate[]
+  campaigns Campaign[]
+  messages Message[]
+  manualSends ManualSend[]
+  sharedFiles SharedFile[]
+  invitations Invitation[]
+  audit AuditLog[]
+}
+model BusinessLogo {
+  businessId String @id
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  content Bytes
+  version String
+  updatedAt DateTime @updatedAt
+}
+model BusinessBillingOrder {
+  id String @id @default(cuid())
+  businessId String
+  business Business @relation(fields: [businessId], references: [id])
+  amountPaise Int
+  currency String @default("INR")
+  razorpayKeyId String
+  razorpayOrderId String @unique
+  razorpayPaymentId String? @unique
+  createdBy String
+  createdAt DateTime @default(now())
+  paidAt DateTime?
+  periodStart DateTime? @db.Date
+  periodEnd DateTime? @db.Date
+  @@index([businessId, createdAt])
+}
+model Branch {
+  id String @id @default(cuid())
+  businessId String @unique
+  name String
+  business Business @relation(fields: [businessId], references: [id])
+  manualSends ManualSend[]
+  sharedFiles SharedFile[]
+  @@unique([businessId, id])
+}
+model StaffAccess {
+  id String @id @default(cuid())
+  businessId String
+  userId String
+  role String @default("STAFF")
+  business Business @relation(fields: [businessId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([businessId, userId])
+}
+model Invitation {
+  id String @id @default(cuid())
+  businessId String
+  business Business @relation(fields: [businessId], references: [id])
+  email String
+  name String
+  role String @default("STAFF")
+  tokenHash String @unique
+  expiresAt DateTime
+  acceptedAt DateTime?
+  createdAt DateTime @default(now())
+  @@index([businessId])
+}
+model Contact {
+  id String @id @default(cuid())
+  businessId String
+  business Business @relation(fields: [businessId], references: [id])
+  phone String
+  serviceConsent Boolean @default(false)
+  marketingConsent Boolean @default(false)
+  consentAt DateTime?
+  consentSource String?
+  optedOutAt DateTime?
+  members Member[]
+  @@unique([businessId, phone])
+  @@unique([businessId, id])
+}
+model Member {
+  id String @id @default(cuid())
+  businessId String
+  branchId String
+  business Business @relation(fields: [businessId], references: [id])
+  code String
+  name String
+  email String?
+  notes String @default("")
+  archived Boolean @default(false)
+  contactId String
+  contact Contact @relation(fields: [businessId, contactId], references: [businessId, id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  memberships Membership[]
+  charges Charge[]
+  checkins Checkin[]
+  messages Message[]
+  manualSends ManualSend[]
+  qr MemberQr?
+  photo MemberPhoto?
+  @@unique([businessId, id])
+  @@unique([businessId, code])
+  @@index([businessId, name])
+  @@index([businessId, contactId])
+  @@index([businessId, createdAt])
+}
+model MemberPhoto {
+  memberId String @id
+  businessId String
+  member Member @relation(fields: [businessId, memberId], references: [businessId, id], onDelete: Cascade)
+  content Bytes
+  version String
+  updatedAt DateTime @updatedAt
+  @@unique([businessId, memberId])
+  @@index([businessId])
+}
+
+model ManualSend {
+  id String @id @default(cuid())
+  businessId String
+  branchId String
+  memberId String
+  business Business @relation(fields: [businessId], references: [id])
+  branch Branch @relation(fields: [businessId, branchId], references: [businessId, id])
+  member Member @relation(fields: [businessId, memberId], references: [businessId, id])
+  phone String
+  body String
+  kind String
+  recordedBy String
+  idempotencyKey String @unique
+  createdAt DateTime @default(now())
+  @@index([businessId, createdAt])
+  @@index([businessId, memberId])
+  @@index([businessId, branchId])
+}
+
+model SharedFile {
+  id String @id @default(cuid())
+  businessId String
+  branchId String
+  business Business @relation(fields: [businessId], references: [id])
+  branch Branch @relation(fields: [businessId, branchId], references: [businessId, id])
+  uploadedBy String
+  name String
+  mimeType String
+  size Int
+  content Bytes?
+  tokenHash String @unique
+  encryptedToken String
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  revokedAt DateTime?
+  @@index([businessId, branchId, createdAt])
+  @@index([businessId, uploadedBy])
+}
+
+model Plan {
+  id String @id @default(cuid())
+  businessId String
+  business Business @relation(fields: [businessId], references: [id])
+  name String
+  months Int
+  amountPaise Int
+  admissionFeePaise Int @default(0)
+  taxRateBps Int @default(0)
+  taxInclusive Boolean @default(false)
+  active Boolean @default(true)
+  memberships Membership[]
+  @@unique([businessId, id])
+}
+model Membership {
+  id String @id @default(cuid())
+  businessId String
+  branchId String
+  business Business @relation(fields: [businessId], references: [id])
+  memberId String
+  member Member @relation(fields: [businessId, memberId], references: [businessId, id])
+  planId String
+  plan Plan @relation(fields: [businessId, planId], references: [businessId, id])
+  planName String
+  startDate DateTime @db.Date
+  endDate DateTime @db.Date
+  cancelledAt DateTime?
+  createdAt DateTime @default(now())
+  charge Charge?
+  @@unique([businessId, id])
+  @@index([businessId, endDate])
+  @@index([businessId, memberId, startDate])
+  @@index([businessId, planId])
+}
+model Charge {
+  id String @id @default(cuid())
+  businessId String
+  branchId String
+  business Business @relation(fields: [businessId], references: [id])
+  memberId String
+  member Member @relation(fields: [businessId, memberId], references: [businessId, id])
+  membershipId String @unique
+  membership Membership @relation(fields: [businessId, membershipId], references: [businessId, id])
+  amountPaise Int
+  baseAmountPaise Int?
+  admissionFeePaise Int @default(0)
+  discountType String @default("NONE")
+  discountValue Int @default(0)
+  discountPaise Int @default(0)
+  discountReason String @default("")
+  taxRateBps Int @default(0)
+  taxInclusive Boolean @default(false)
+  taxPaise Int @default(0)
+  dueDate DateTime @db.Date
+  description String
+  voidedAt DateTime?
+  createdAt DateTime @default(now())
+  payments Payment[]
+  @@unique([businessId, id])
+  @@unique([businessId, membershipId])
+  @@index([businessId, dueDate])
+  @@index([businessId, memberId])
+}
+model Payment {
+  id String @id @default(cuid())
+  businessId String
+  branchId String
+  business Business @relation(fields: [businessId], references: [id])
+  chargeId String
+  charge Charge @relation(fields: [businessId, chargeId], references: [businessId, id])
+  amountPaise Int
+  method String
+  reference String @default("")
+  recordedBy String
+  reversalOfId String? @unique
+  reversalReason String?
+  idempotencyKey String @unique
+  createdAt DateTime @default(now())
+  @@unique([businessId, id])
+  @@index([businessId, createdAt])
+  @@index([businessId, chargeId])
+}
+model Checkin {
+  id String @id @default(cuid())
+  businessId String
+  branchId String
+  business Business @relation(fields: [businessId], references: [id])
+  memberId String
+  member Member @relation(fields: [businessId, memberId], references: [businessId, id])
+  day DateTime @db.Date
+  recordedBy String
+  source String @default("STAFF")
+  createdAt DateTime @default(now())
+  @@unique([businessId, memberId, day])
+  @@index([businessId, day])
+}
+model MemberQr {
+  memberId String @id
+  businessId String
+  business Business @relation(fields: [businessId], references: [id])
+  member Member @relation(fields: [businessId, memberId], references: [businessId, id], onDelete: Cascade)
+  tokenHash String @unique
+  encryptedToken String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([businessId, memberId])
+  @@index([businessId])
+}
+model WhatsAppConnection {
+  id String @id @default(cuid())
+  businessId String @unique
+  business Business @relation(fields: [businessId], references: [id])
+  phoneNumberId String @unique
+  accountId String
+  displayPhone String?
+  encryptedToken String
+  status String @default("DISCONNECTED")
+  lastError String?
+  checkedAt DateTime?
+  nextSendAt DateTime @default(now())
+}
+model MessageTemplate {
+  id String @id @default(cuid())
+  businessId String
+  business Business @relation(fields: [businessId], references: [id])
+  name String
+  language String @default("en")
+  category String
+  status String
+  body String
+  parameterKeys String[]
+  purpose String @default("ANNOUNCEMENT")
+  providerId String?
+  campaigns Campaign[]
+  messages Message[]
+  @@unique([businessId, name, language])
+  @@unique([businessId, id])
+}
+model Campaign {
+  id String @id @default(cuid())
+  businessId String
+  business Business @relation(fields: [businessId], references: [id])
+  name String
+  templateId String
+  template MessageTemplate @relation(fields: [businessId, templateId], references: [businessId, id])
+  segment String
+  scheduledAt DateTime
+  cancelledAt DateTime?
+  recipientCount Int
+  createdAt DateTime @default(now())
+  messages Message[]
+  @@unique([businessId, id])
+  @@index([businessId, createdAt])
+  @@index([businessId, templateId])
+}
+model Message {
+  id String @id @default(cuid())
+  businessId String
+  business Business @relation(fields: [businessId], references: [id])
+  memberId String
+  member Member @relation(fields: [businessId, memberId], references: [businessId, id])
+  templateId String
+  template MessageTemplate @relation(fields: [businessId, templateId], references: [businessId, id])
+  campaignId String?
+  campaign Campaign? @relation(fields: [businessId, campaignId], references: [businessId, id])
+  membershipId String?
+  chargeId String?
+  kind String
+  phone String
+  status String @default("QUEUED")
+  idempotencyKey String @unique
+  scheduledAt DateTime
+  providerMessageId String? @unique
+  attempts Int @default(0)
+  lastError String?
+  sentAt DateTime?
+  deliveredAt DateTime?
+  readAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([status, scheduledAt])
+  @@index([businessId, createdAt])
+  @@index([businessId, memberId, kind])
+  @@index([businessId, campaignId])
+  @@index([businessId, templateId])
+}
+model AuditLog {
+  id String @id @default(cuid())
+  businessId String
+  business Business @relation(fields: [businessId], references: [id])
+  actorId String
+  action String
+  entityId String?
+  detail String
+  createdAt DateTime @default(now())
+  @@index([businessId, createdAt])
+}
+model SupportGrant {
+  id String @id @default(cuid())
+  actorId String
+  businessId String
+  reason String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  @@index([actorId, expiresAt])
+}
+model WorkerHeartbeat {
+  id String @id
+  updatedAt DateTime @updatedAt
+  detail String?
+}
+model WebhookEvent {
+  key String @id
+  createdAt DateTime @default(now())
+}
+model RateLimit {
+  id String @id @default(cuid())
+  key String @unique
+  count Int
+  lastRequest BigInt
+}
