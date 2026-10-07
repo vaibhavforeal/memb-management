@@ -2,7 +2,7 @@
 
 Use **Deployment Center → Manual Deployment (Push) → Publish files (new)**.
 
-The upload file is `artifacts/membrr-azure-source.zip`. Recreate it with `pwsh -File ops/package-azure.ps1` after changing application source. It contains application source, the dependency lockfile, database migrations, and the build/admin bootstrap scripts. Dependencies and the Next.js output must be built on Azure's Linux host. This is a source ZIP, not a prebuilt app.
+The upload file is `artifacts/membrr-azure-source.zip`. Recreate it with `pwsh -File ops/package-azure.ps1` after changing application source; the script packages only committed files (from `git`) and refuses to run on a dirty tree. It contains application source, the dependency lockfile, database migrations, and the build/admin bootstrap scripts. Dependencies and the Next.js output must be built on Azure's Linux host. This is a source ZIP, not a prebuilt app.
 
 ## Settings before upload
 
