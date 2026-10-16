@@ -21,7 +21,7 @@ In **Settings → Environment variables → App settings**, configure:
 | `WHATSAPP_MODE` | `manual` |
 | `ALLOW_LOCAL_EMAIL_LOG` | `false` |
 
-For optional Google sign-in, also configure `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` using [the Google sign-in setup guide](GOOGLE-SIGN-IN.md). Both are required before the Google button appears. Existing password sign-in remains enabled.
+For optional Google sign-in, also configure `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` using [the Google sign-in setup guide](GOOGLE-SIGN-IN.md). Both are required before the Google button appears. Existing password sign-in remains enabled. The same credentials also enable Google sign-in on the admin console, which needs its own redirect URI added to the Google OAuth client (see the console section of that guide).
 
 The portal created `AZURE_POSTGRESQL_HOST`, `AZURE_POSTGRESQL_USER`, `AZURE_POSTGRESQL_PASSWORD`, `AZURE_POSTGRESQL_DATABASE`, `AZURE_POSTGRESQL_PORT`, and `AZURE_POSTGRESQL_SSL`. This app reads `DATABASE_URL`; those separate values are not automatically mapped by its current code. Construct the PostgreSQL URI using those values, percent-encode the username/password/database components, and use TLS (`sslmode=require`). Keep the URI and generated secrets in Azure app settings and a secure password manager, outside this ZIP and chat.
 

@@ -11,6 +11,8 @@ export function LoginForm({
   initialError = "",
   redirectTo = "/dashboard",
   forgotHref = "/forgot-password",
+  newUserCallbackURL = "/onboarding",
+  errorCallbackURL = "/login?auth_error=google",
 }: {
   demo?: boolean;
   googleEnabled?: boolean;
@@ -18,6 +20,10 @@ export function LoginForm({
   redirectTo?: string;
   /** Where "Forgot password?" points; empty hides the link. */
   forgotHref?: string;
+  /** Where a brand-new Google account lands (the console has no onboarding). */
+  newUserCallbackURL?: string;
+  /** Where a failed or cancelled Google sign-in returns. */
+  errorCallbackURL?: string;
 }) {
   const [error, setError] = useState(initialError);
   const [pending, setPending] = useState<"email" | "google" | null>(null);
@@ -59,8 +65,8 @@ export function LoginForm({
                   provider: "google",
                   // Already sanitised by safeNext on the login page.
                   callbackURL: redirectTo,
-                  newUserCallbackURL: "/onboarding",
-                  errorCallbackURL: "/login?auth_error=google",
+                  newUserCallbackURL,
+                  errorCallbackURL,
                 });
                 if (result.error) {
                   setError(

@@ -126,7 +126,7 @@ export function Shell({
           href="/dashboard"
           className="flex h-12 items-center px-2 focus-visible:outline-white"
         >
-          <Wordmark tone="light" />
+          <Wordmark tone="light" className="h-6" />
         </Link>
         <div className="mb-3 flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 p-2.5">
           <BusinessLogo src={business.logoUrl} name={business.name} />

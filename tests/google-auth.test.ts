@@ -217,13 +217,15 @@ describe("Google sign-in alongside existing accounts", () => {
     expect(env.data.account).toHaveLength(1);
   });
 
-  it("also supports a new Google user starting from the login page", async () => {
+  it("does not create an account from Google sign-in without a sign-up request", async () => {
     const env = await setup();
     const response = await callback(env);
-    expect(new URL(response.headers.get("location")!, baseURL).pathname).toBe(
-      "/onboarding",
-    );
-    expect(env.data.user).toHaveLength(1);
+    const location = new URL(response.headers.get("location")!, baseURL);
+    expect(location.pathname).toBe("/login");
+    expect(location.searchParams.get("error")).toBe("signup_disabled");
+    expect(env.data.user).toHaveLength(0);
+    expect(env.data.account).toHaveLength(0);
+    expect(env.data.session).toHaveLength(0);
   });
 
   it("keeps raw password signup disabled", async () => {

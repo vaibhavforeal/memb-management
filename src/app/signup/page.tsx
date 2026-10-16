@@ -4,6 +4,7 @@ import { SignupForm } from "@/components/signup-form";
 import { money } from "@/lib/domain";
 import { SIGNUP_MONTHLY_FEE_PAISE } from "@/lib/workspace-access";
 import { connection } from "next/server";
+import { googleSignInEnabled } from "@/lib/google-sign-in";
 
 export default async function SignupPage({
   searchParams,
@@ -12,10 +13,6 @@ export default async function SignupPage({
 }) {
   await connection();
   const query = await searchParams;
-  const googleEnabled = Boolean(
-    process.env.GOOGLE_CLIENT_ID?.trim() &&
-    process.env.GOOGLE_CLIENT_SECRET?.trim(),
-  );
   const error =
     query.error === "account_not_linked"
       ? "An account already uses this email. Sign in with your password."
@@ -36,7 +33,10 @@ export default async function SignupPage({
           Three days free, then {money(SIGNUP_MONTHLY_FEE_PAISE)} per month. No
           card required.
         </p>
-        <SignupForm googleEnabled={googleEnabled} initialError={error} />
+        <SignupForm
+          googleEnabled={googleSignInEnabled()}
+          initialError={error}
+        />
         <p className="mt-5 text-center text-xs text-muted-foreground">
           Already have an account?{" "}
           <Link href="/login" className="text-primary">

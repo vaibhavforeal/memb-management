@@ -1,28 +1,31 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
+import { betterAuthBaseURL, onMainSite } from "./auth-base-url";
 import { db } from "./db";
+import { googleCredentials } from "./google-sign-in";
 import { sendEmail } from "./mail";
-const googleClientId = process.env.GOOGLE_CLIENT_ID?.trim();
-const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
+const google = googleCredentials();
 export const auth = betterAuth({
   database: prismaAdapter(db, { provider: "postgresql" }),
-  baseURL: process.env.BETTER_AUTH_URL,
-  trustedOrigins: [process.env.CONSOLE_URL].filter(Boolean) as string[],
+  baseURL: betterAuthBaseURL({
+    baseUrl: process.env.BETTER_AUTH_URL,
+    consoleUrl: process.env.CONSOLE_URL,
+  }),
   secret: process.env.BETTER_AUTH_SECRET,
-  socialProviders:
-    googleClientId && googleClientSecret
-      ? {
-          google: {
-            clientId: googleClientId,
-            clientSecret: googleClientSecret,
-            disableSignUp: false,
-            prompt: "select_account",
-            accessType: "online",
-            includeGrantedScopes: false,
-          },
-        }
-      : {},
+  socialProviders: google
+    ? {
+        google: {
+          ...google,
+          // Only /signup (which sends requestSignUp) creates accounts; sign-in on
+          // /login or the console rejects an unknown Google email.
+          disableImplicitSignUp: true,
+          prompt: "select_account",
+          accessType: "online",
+          includeGrantedScopes: false,
+        },
+      }
+    : {},
   account: {
     encryptOAuthTokens: true,
     accountLinking: {
@@ -42,7 +45,7 @@ export const auth = betterAuth({
       await sendEmail(
         user.email,
         "Reset your membrr password",
-        `Reset your password: ${url}\nThis link expires in one hour.`,
+        `Reset your password: ${onMainSite(url, process.env.BETTER_AUTH_URL)}\nThis link expires in one hour.`,
       );
     },
   },

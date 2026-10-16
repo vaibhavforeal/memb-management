@@ -3,6 +3,7 @@ import { LoginForm } from "@/components/login-form";
 import { connection } from "next/server";
 import Link from "next/link";
 import { safeNext } from "@/lib/safe-next";
+import { googleSignInEnabled, googleSignInError } from "@/lib/google-sign-in";
 export default async function LoginPage({
   searchParams,
 }: {
@@ -10,16 +11,6 @@ export default async function LoginPage({
 }) {
   await connection();
   const query = await searchParams;
-  const googleEnabled = Boolean(
-    process.env.GOOGLE_CLIENT_ID?.trim() &&
-    process.env.GOOGLE_CLIENT_SECRET?.trim(),
-  );
-  const signInError =
-    query.error === "account_not_linked"
-      ? "Use your verified membrr email with Google, or sign in with your password."
-      : query.error || query.auth_error
-        ? "Google sign-in was not completed. Try again or use your password."
-        : "";
   return (
     <main className="grid min-h-screen lg:grid-cols-2">
       <section className="relative hidden flex-col justify-between bg-brand-gradient p-8 text-white lg:flex">
@@ -44,8 +35,8 @@ export default async function LoginPage({
           </h2>
 
           <LoginForm
-            googleEnabled={googleEnabled}
-            initialError={signInError}
+            googleEnabled={googleSignInEnabled()}
+            initialError={googleSignInError(query)}
             redirectTo={safeNext(query.next)}
             demo={
               process.env.NODE_ENV !== "production" &&

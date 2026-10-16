@@ -321,3 +321,63 @@ test("Google sign-in on the main host returns to the next parameter", async ({
   await expect(page.getByText("Google sign-in could not start")).toBeVisible();
   expect(body?.callbackURL).toBe(next);
 });
+
+test("Google sign-in on the console host starts and returns on the console host", async ({
+  page,
+}) => {
+  await page.goto(`${CONSOLE}/login`);
+  const google = page.getByRole("button", { name: "Continue with Google" });
+  test.skip(
+    (await google.count()) === 0,
+    "Google sign-in is not configured (GOOGLE_CLIENT_ID unset)",
+  );
+  // What the button sends: a console-relative flow that never touches /onboarding.
+  let requestUrl = "";
+  let body: Record<string, string> = {};
+  await page.route("**/api/auth/sign-in/social", async (route) => {
+    requestUrl = route.request().url();
+    body = route.request().postDataJSON();
+    await route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({ message: "Blocked by the e2e test" }),
+    });
+  });
+  await google.click();
+  await expect(page.getByText("Google sign-in could not start")).toBeVisible();
+  expect(new URL(requestUrl).origin).toBe(CONSOLE);
+  expect(body.callbackURL).toBe("/");
+  expect(body.newUserCallbackURL).toBe("/");
+  expect(body.errorCallbackURL).toBe("/login?auth_error=google");
+
+  // What the server answers: Google must send the user back to the console host.
+  await page.unroute("**/api/auth/sign-in/social");
+  const googleUrl = await page.evaluate(async (payload) => {
+    const response = await fetch("/api/auth/sign-in/social", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...payload, disableRedirect: true }),
+    });
+    return (await response.json()).url as string;
+  }, body);
+  expect(new URL(googleUrl).searchParams.get("redirect_uri")).toBe(
+    `${CONSOLE}/api/auth/callback/google`,
+  );
+});
+
+test("a failed Google sign-in returns to the console login with a message", async ({
+  page,
+}) => {
+  await page.goto(`${CONSOLE}/login?error=access_denied`);
+  await expect(
+    page.getByText("Google sign-in was not completed"),
+  ).toBeVisible();
+  await page.goto(`${CONSOLE}/login?auth_error=google&error=signup_disabled`);
+  await expect(
+    page.getByText("This account doesn't have console access."),
+  ).toBeVisible();
+  await page.goto(`${CONSOLE}/login?error=account_not_linked`);
+  await expect(
+    page.getByText("Use your verified membrr email with Google"),
+  ).toBeVisible();
+});

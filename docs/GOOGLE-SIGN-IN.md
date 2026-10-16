@@ -49,12 +49,25 @@ The **Continue with Google** button appears on signup and login only when both G
 
 ## 4. Create an account or sign in
 
-1. On signup or login choose **Continue with Google** and select a Google account.
+1. New users choose **Continue with Google** on signup; returning users can also use it on login. Only signup creates an account: choosing Google on login with an email membrr doesn't know shows "No membrr account uses this Google email" and creates nothing.
 2. New users enter workspace name and city on `/onboarding`. This creates owner access, a main branch, and a ₹499/month workspace with a three-day trial starting when their account was created. A password and invitation are not required.
 3. Returning users open their existing workspace. Existing password accounts can link only when both Google and membrr have verified the same email. Pending invited users should accept their invitation first to join the invited workspace.
 4. Interrupted setup resumes after the next sign-in. Repeated submissions do not create extra workspaces or extend a trial. Google signup never grants platform administrator access.
 
 If the first platform administrator has not been created, use the existing `npm run bootstrap` process from the Azure deployment guide with your Google email as `ADMIN_EMAIL`. That administrator can then use either Google or the chosen bootstrap password. Creating a Google Cloud OAuth client alone does not create a membrr administrator.
+
+## Google sign-in on the admin console
+
+The admin console at `https://console.membrr.pro` shows **Continue with Google** when the same two Google settings are present. Google returns to the console host only when `CONSOLE_URL` is set (`https://console.membrr.pro`); the console has its own host and cookies, so the flow cannot pass through the main site. Add these to the **same** OAuth client from step 1:
+
+- **Authorized JavaScript origin:** `https://console.membrr.pro`
+- **Authorized redirect URI:** `https://console.membrr.pro/api/auth/callback/google`
+
+Keep the existing main-site entries. Without the new redirect URI, Google shows `redirect_uri_mismatch` on the console only.
+
+Google signs in only people who already have console access (`platformAdmin`). Any other Google account is signed out and shown "This account doesn't have console access." A Google email with no membrr account gets the same message, and no user record is created.
+
+Password-reset emails always link to the main site, even when requested from the console host.
 
 ## Troubleshooting
 

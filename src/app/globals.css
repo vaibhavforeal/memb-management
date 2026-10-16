@@ -14,6 +14,8 @@
   --color-popover-foreground: #0b1220;
   --color-primary: #1d4ed8;
   --color-primary-foreground: #ffffff;
+  /* The logo keeps its own indigo (assets/membrr-logo.svg). */
+  --color-brand-logo: #5145e5;
   --color-secondary: #eef2fa;
   --color-secondary-foreground: #0b1220;
   --color-muted: #eef2fa;
